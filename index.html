@@ -57,6 +57,7 @@ button.av{cursor:pointer;transition:.15s}button.av:hover{border-color:var(--acc)
 .badge{display:inline-block;padding:3px 12px;border-radius:99px;font-size:12.5px;font-weight:600;color:var(--c);background:color-mix(in srgb,var(--c) 15%,transparent);white-space:nowrap}
 .lnk{color:var(--g);font-weight:600;text-decoration:none;border-bottom:1px dashed currentColor}
 .cell{width:100%;border:1px solid transparent;background:transparent;color:inherit;font:inherit;padding:8px 10px;border-radius:10px;resize:none;field-sizing:content;min-height:40px;line-height:1.7}
+input[type=date].cell{direction:ltr;text-align:center;min-width:140px}
 .cell:hover{border-color:var(--line);background:var(--bg)}
 .cell:focus{background:var(--bg)}
 .x{border:0;background:none;color:var(--mut);cursor:pointer;font:inherit;font-size:13px;padding:6px 10px;border-radius:8px}
@@ -117,6 +118,7 @@ const cc=id=>(depts.find(d=>d.id===id)||{}).c||PAL[0];
 const has=r=>(r.name||'').trim();
 const cnt=id=>rows.filter(r=>r.dept===id&&has(r)).length;
 const tot=()=>depts.reduce((a,d)=>a+cnt(d.id),0);
+const fd=d=>{const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(d||'');return m?m[3]+'/'+m[2]+'/'+m[1]:''};
 const safe=u=>/^https?:\/\//i.test(u||'')?u:'';
 const avView=r=>r.photo?`<img class="av" src="${esc(r.photo)}" alt="">`:`<span class="av">${esc((r.name||'').trim().charAt(0))}</span>`;
 const avEdit=r=>`<button class="av" data-ph="${r.id}" title="إضافة أو تغيير الصورة">${r.photo?`<img src="${esc(r.photo)}" alt="">`:'+'}</button>`;
@@ -124,41 +126,46 @@ const avEdit=r=>`<button class="av" data-ph="${r.id}" title="إضافة أو ت�
 function side(){
  const nav=(v,t,n)=>`<button class="nav ${view===v?'on':''}" data-view="${esc(v)}"><span>${esc(t)}</span><small>${n}</small></button>`;
  return `<aside class="${menuOpen?'open':''}"><img class="logo" src="logo.png" alt="المجلس الإشرافي"><span class="cur">${esc(view===ALL?'لوحة المتابعة':dn(view))}</span><button class="burger" data-menu="1" aria-label="القائمة">${menuOpen?'✕':'☰'}</button><div class="sep"></div>
- <div class="mn" style="flex:1;min-height:0;overflow-y:auto">${nav(ALL,'لوحة المتابعة',tot())}<div class="lbl">إدخال الزائرين حسب المشروع</div>${depts.map(d=>nav(d.id,d.name,cnt(d.id))).join('')}<button class="nav" data-newdept style="justify-content:center;border:1px dashed rgba(255,255,255,.35);margin-top:10px">+ إضافة قسم</button></div>
+ <div class="mn" style="flex:1;min-height:0;overflow-y:auto">${nav(ALL,'لوحة المتابعة',tot())}<div class="lbl">إدخال الزائرين حسب الجهة</div>${depts.map(d=>nav(d.id,d.name,cnt(d.id))).join('')}<button class="nav" data-newdept style="justify-content:center;border:1px dashed rgba(255,255,255,.35);margin-top:10px">+ إضافة قسم</button></div>
  <div class="mn" style="margin-top:14px">${GH?`<button class="nav" data-tok="1" style="justify-content:center;border:1px solid rgba(255,255,255,.25)">${TOKEN?'تسجيل الخروج':'تسجيل الدخول للتحرير'}</button>`:''}<div class="st ${off?'off':''}" style="margin-top:14px"><i></i><span id="stt">${status}</span></div></div></aside>`;
 }
 function rowsDash(){
  const k=q.trim();
- const l=rows.filter(r=>has(r)&&(flt===ALL||r.dept===flt)&&(!k||((r.name||'')+(r.address||'')+(r.purpose||'')).includes(k)));
- if(!l.length)return `<tr><td colspan="7" class="empty">لا توجد أسماء بعد</td></tr>`;
- return l.map((r,i)=>`<tr><td class="n">${i+1}</td><td class="c">${avView(r)}</td><td style="font-weight:600" data-l="الاسم">${esc(r.name)}</td><td data-l="العنوان">${esc(r.address)}</td><td data-l="هدف الزيارة">${esc(r.purpose)}</td>
+ const l=rows.filter(r=>has(r)&&(flt===ALL||r.dept===flt)&&(!k||((r.name||'')+(r.job||'')+(r.phone||'')+(r.address||'')+(r.purpose||'')).includes(k)));
+ if(!l.length)return `<tr><td colspan="11" class="empty">لا توجد أسماء بعد</td></tr>`;
+ return l.map((r,i)=>`<tr><td class="n">${i+1}</td><td class="c">${avView(r)}</td><td style="font-weight:600" data-l="الاسم">${esc(r.name)}</td><td data-l="الوظيفة">${esc(r.job)}</td><td data-l="رقم الهاتف" dir="ltr" style="text-align:right">${esc(r.phone)}</td><td data-l="العنوان">${esc(r.address)}</td><td data-l="غرض الزيارة">${esc(r.purpose)}</td>
+ <td class="c" data-l="تاريخ القدوم" style="white-space:nowrap">${esc(fd(r.arrive))}</td><td class="c" data-l="تاريخ العودة" style="white-space:nowrap">${esc(fd(r.back))}</td>
  <td class="c" data-l="الرابط">${safe(r.link)?`<a class="lnk" href="${esc(r.link)}" target="_blank" rel="noopener">فتح الرابط</a>`:''}</td>
- <td data-l="المشروع"><span class="badge" style="--c:${cc(r.dept)}">${esc(dn(r.dept))}</span></td></tr>`).join('');
+ <td data-l="الجهة"><span class="badge" style="--c:${cc(r.dept)}">${esc(dn(r.dept))}</span></td></tr>`).join('');
 }
 function dash(){
  if(flt!==ALL&&!depts.some(d=>d.id===flt))flt=ALL;
  return `<div class="hero"><h1>أسماء الزائرين للمشاريع</h1><p>تحت المجلس الإشرافي للعام ١٤٤٨ هـ</p></div>
- <div class="stats"><button class="stat tot" data-flt="${ALL}"><b>${tot()}</b><span>إجمالي الزائرين في كل المشاريع</span></button>
+ <div class="stats"><button class="stat tot" data-flt="${ALL}"><b>${tot()}</b><span>إجمالي الزائرين في كل الجهات</span></button>
  ${depts.map(d=>`<button class="stat" style="--c:${d.c}" data-flt="${d.id}"><b>${cnt(d.id)}</b><span>${esc(d.name)}</span></button>`).join('')}</div>
- <div class="bar">${[{id:ALL,name:'كل المشاريع'},...depts].map(d=>`<button class="pill ${flt===d.id?'on':''}" data-flt="${d.id}">${esc(d.name)}</button>`).join('')}
- <select class="fsel" id="fsel">${[{id:ALL,name:'كل المشاريع'},...depts].map(d=>`<option value="${d.id}"${flt===d.id?' selected':''}>${esc(d.name)}</option>`).join('')}</select>
- <input class="search" id="q" placeholder="ابحث بالاسم أو العنوان…" value="${esc(q)}"></div>
- <div class="tw"><table><thead><tr><th>م</th><th>الصورة</th><th>الاسم</th><th>العنوان</th><th>هدف الزيارة</th><th>الرابط</th><th>المشروع</th></tr></thead><tbody id="tb">${rowsDash()}</tbody></table></div>`;
+ <div class="bar">${[{id:ALL,name:'كل الجهات'},...depts].map(d=>`<button class="pill ${flt===d.id?'on':''}" data-flt="${d.id}">${esc(d.name)}</button>`).join('')}
+ <select class="fsel" id="fsel">${[{id:ALL,name:'كل الجهات'},...depts].map(d=>`<option value="${d.id}"${flt===d.id?' selected':''}>${esc(d.name)}</option>`).join('')}</select>
+ <input class="search" id="q" placeholder="ابحث بالاسم أو الوظيفة أو الهاتف أو العنوان…" value="${esc(q)}"></div>
+ <div class="tw"><table><thead><tr><th>م</th><th>الصورة</th><th>الاسم</th><th>الوظيفة</th><th>رقم الهاتف</th><th>العنوان</th><th>غرض الزيارة</th><th>تاريخ القدوم</th><th>تاريخ العودة</th><th>الرابط</th><th>الجهة</th></tr></thead><tbody id="tb">${rowsDash()}</tbody></table></div>`;
 }
 function dept(id){
  const d=depts.find(x=>x.id===id);if(!d){view=ALL;return dash()}
  const l=rows.filter(r=>r.dept===id);
  const body=l.map((r,i)=>`<tr data-id="${r.id}"><td class="n">${i+1}</td><td class="c">${avEdit(r)}</td>
  <td data-l="الاسم"><input class="cell" data-f="name" value="${esc(r.name)}" placeholder="اسم الزائر"></td>
+ <td data-l="الوظيفة"><input class="cell" data-f="job" value="${esc(r.job)}" placeholder="الوظيفة"></td>
+ <td data-l="رقم الهاتف"><input class="cell" data-f="phone" type="tel" inputmode="tel" dir="ltr" value="${esc(r.phone)}" placeholder="رقم الهاتف"></td>
  <td data-l="العنوان"><textarea class="cell" data-f="address" rows="1" placeholder="العنوان">${esc(r.address)}</textarea></td>
- <td data-l="هدف الزيارة"><textarea class="cell" data-f="purpose" rows="1" placeholder="هدف الزيارة">${esc(r.purpose)}</textarea></td>
+ <td data-l="غرض الزيارة"><textarea class="cell" data-f="purpose" rows="1" placeholder="غرض الزيارة">${esc(r.purpose)}</textarea></td>
+ <td data-l="تاريخ القدوم"><input class="cell" data-f="arrive" type="date" value="${esc(r.arrive)}" title="اختر تاريخ القدوم"></td>
+ <td data-l="تاريخ العودة"><input class="cell" data-f="back" type="date" min="${esc(r.arrive)}" value="${esc(r.back)}" title="اختر تاريخ العودة"></td>
  <td data-l="الرابط"><input class="cell" data-f="link" dir="ltr" value="${esc(r.link)}" placeholder="https://…"></td>
  <td><button class="x" data-del="${r.id}">حذف</button></td></tr>`).join('');
  return `<div class="dh"><input class="cell dn" data-dn="${id}" value="${esc(d.name)}" style="color:${d.c}" title="اضغط لتعديل اسم القسم"><span class="badge" style="--c:${d.c}">${cnt(id)} زائر</span>
  <button class="x" data-deld="${id}" style="margin-inline-start:auto">حذف القسم</button></div>
  <p class="hint">اضغط على الدائرة لإضافة الصورة، واضغط على اسم القسم لتعديله. يُحفظ كل ما تكتبه تلقائيًا ويظهر مباشرة في لوحة المتابعة.</p>
- <div class="tw"><table><thead><tr><th>م</th><th>الصورة</th><th style="width:22%">الاسم</th><th style="width:22%">العنوان</th><th style="width:26%">هدف الزيارة</th><th>الرابط</th><th></th></tr></thead>
- <tbody>${body||`<tr><td colspan="7" class="empty">ابدأ بإضافة أول زائر</td></tr>`}</tbody></table></div>
+ <div class="tw"><table><thead><tr><th>م</th><th>الصورة</th><th style="min-width:170px">الاسم</th><th style="min-width:140px">الوظيفة</th><th style="min-width:150px">رقم الهاتف</th><th style="min-width:170px">العنوان</th><th style="min-width:180px">غرض الزيارة</th><th style="min-width:150px">تاريخ القدوم</th><th style="min-width:150px">تاريخ العودة</th><th style="min-width:130px">الرابط</th><th></th></tr></thead>
+ <tbody>${body||`<tr><td colspan="11" class="empty">ابدأ بإضافة أول زائر</td></tr>`}</tbody></table></div>
  <button class="add" data-add="${id}">+ إضافة زائر جديد</button>`;
 }
 function render(){
@@ -193,7 +200,9 @@ document.addEventListener('input',e=>{
  }
  const f=t.dataset&&t.dataset.f;if(!f)return;
  const id=t.closest('tr').dataset.id,r=rows.find(x=>x.id===id);if(!r)return;
- r[f]=t.value;clearTimeout(T[id]);T[id]=setTimeout(()=>save(r),DEB);
+ r[f]=t.value;
+ if(f==='arrive'){const b=t.closest('tr').querySelector('[data-f=back]');if(b)b.min=t.value}
+ clearTimeout(T[id]);T[id]=setTimeout(()=>save(r),DEB);
 });
 document.addEventListener('change',e=>{if(e.target.id==='fsel'){flt=e.target.value;render()}});
 document.addEventListener('click',e=>{
@@ -209,7 +218,7 @@ document.addEventListener('click',e=>{
   const n={id:'d'+Date.now().toString(36),name,c:PAL[depts.length%PAL.length]};
   depts.push(n);view=n.id;menuOpen=false;render();persist(store.op({op:'dept_add',dept:n}));scrollTo(0,0);
  }else if(d.add!==undefined){
-  const r={id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),dept:d.add,name:'',address:'',purpose:'',link:'',photo:'',ts:Date.now()};
+  const r={id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),dept:d.add,name:'',job:'',phone:'',address:'',purpose:'',arrive:'',back:'',link:'',photo:'',ts:Date.now()};
   rows.push(r);save(r);render();
   const a=document.querySelectorAll('input[data-f=name]');a[a.length-1]?.focus();
  }else if(d.deld){
