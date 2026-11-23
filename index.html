@@ -137,7 +137,7 @@ const avEdit=r=>`<button class="av" data-ph="${r.id}" title="إضافة أو ت�
 function side(){
  const nav=(v,t,n)=>`<button class="nav ${view===v?'on':''}" data-view="${esc(v)}"><span>${esc(t)}</span><small>${n}</small></button>`;
  return `<aside class="${menuOpen?'open':''}"><img class="logo" src="logo.png" alt="المجلس الإشرافي"><span class="cur">${esc(view===ALL?'لوحة المتابعة':dn(view))}</span><button class="burger" data-menu="1" aria-label="القائمة">${menuOpen?'✕':'☰'}</button><div class="sep"></div>
- <div class="mn" style="flex:1;min-height:0;overflow-y:auto">${nav(ALL,'لوحة المتابعة',tot())}<div class="lbl">إدخال الزائرين حسب الجهة</div>${depts.map(d=>nav(d.id,d.name,cnt(d.id))).join('')}<button class="nav" data-newdept style="justify-content:center;border:1px dashed rgba(255,255,255,.35);margin-top:10px">+ إضافة قسم</button></div>
+ <div class="mn" style="flex:1;min-height:0;overflow-y:auto">${nav(ALL,'الصفحة الرئيسية',tot())}<div class="lbl">إدخال الزائرين حسب الجهة</div>${depts.map(d=>nav(d.id,d.name,cnt(d.id))).join('')}<button class="nav" data-newdept style="justify-content:center;border:1px dashed rgba(255,255,255,.35);margin-top:10px">+ إضافة قسم</button></div>
  <div class="mn" style="margin-top:14px">${GH?`<button class="nav" data-tok="1" style="justify-content:center;border:1px solid rgba(255,255,255,.25)">${TOKEN?'تسجيل الخروج':'تسجيل الدخول للتحرير'}</button>`:''}<div class="st ${off?'off':''}" style="margin-top:14px"><i></i><span id="stt">${status}</span></div></div></aside>`;
 }
 function rowsDash(){
