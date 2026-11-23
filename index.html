@@ -62,6 +62,14 @@ input[type=date].cell{direction:ltr;text-align:center;min-width:140px}
 .cell:focus{background:var(--bg)}
 .x{border:0;background:none;color:var(--mut);cursor:pointer;font:inherit;font-size:13px;padding:6px 10px;border-radius:8px}
 .x:hover,.x.arm{background:#c4552e;color:#fff}
+.act{position:sticky;left:0;background:var(--card);white-space:nowrap;text-align:center;box-shadow:6px 0 10px -8px rgba(20,50,90,.35);z-index:2}
+th.act{background:var(--g);box-shadow:none;min-width:150px}
+tbody tr:hover .act{background:var(--hov)}
+.sv{border:1px solid var(--g);background:none;color:var(--g);font:inherit;font-size:13.5px;font-weight:700;padding:6px 16px;border-radius:10px;cursor:pointer;margin-inline-end:6px;transition:.15s}
+.sv:hover{background:var(--g);color:var(--th)}
+.sv.dirty{background:#e08a2e;border-color:#e08a2e;color:#fff}
+.sv.ok{background:#2c8c6f;border-color:#2c8c6f;color:#fff}
+.sv:disabled{opacity:.7;cursor:wait}
 .add{margin-top:18px;border:2px dashed var(--g);background:none;color:var(--g);font:inherit;font-weight:700;padding:14px;border-radius:16px;width:100%;cursor:pointer;transition:.15s}
 .add:hover{background:var(--g);color:var(--th)}
 .empty{text-align:center;color:var(--mut);padding:56px 20px;font-family:Amiri,serif;font-size:22px}
@@ -97,6 +105,9 @@ input[type=date].cell{direction:ltr;text-align:center;min-width:140px}
  td.c{justify-content:flex-start}
  td .cell{flex:1;min-width:0;font-size:16px}
  td.empty{display:block;padding:36px 10px}
+ td.act{position:static;box-shadow:none;background:none;display:flex;gap:8px;justify-content:flex-start;padding-top:10px}
+ td.act .sv{flex:1;padding:10px;font-size:15px;margin:0}
+ td.act .x{padding:10px 18px}
  .dh{flex-wrap:wrap;gap:10px}
  .dn{min-width:0;flex:1;font-size:26px}
  .dh .x{margin-inline-start:0!important}
@@ -126,7 +137,7 @@ const avEdit=r=>`<button class="av" data-ph="${r.id}" title="إضافة أو ت�
 function side(){
  const nav=(v,t,n)=>`<button class="nav ${view===v?'on':''}" data-view="${esc(v)}"><span>${esc(t)}</span><small>${n}</small></button>`;
  return `<aside class="${menuOpen?'open':''}"><img class="logo" src="logo.png" alt="المجلس الإشرافي"><span class="cur">${esc(view===ALL?'لوحة المتابعة':dn(view))}</span><button class="burger" data-menu="1" aria-label="القائمة">${menuOpen?'✕':'☰'}</button><div class="sep"></div>
- <div class="mn" style="flex:1;min-height:0;overflow-y:auto">${nav(ALL,'الصفحة الرئيسية',tot())}<div class="lbl">إدخال الزائرين حسب الجهة</div>${depts.map(d=>nav(d.id,d.name,cnt(d.id))).join('')}<button class="nav" data-newdept style="justify-content:center;border:1px dashed rgba(255,255,255,.35);margin-top:10px">+ إضافة قسم</button></div>
+ <div class="mn" style="flex:1;min-height:0;overflow-y:auto">${nav(ALL,'لوحة المتابعة',tot())}<div class="lbl">إدخال الزائرين حسب الجهة</div>${depts.map(d=>nav(d.id,d.name,cnt(d.id))).join('')}<button class="nav" data-newdept style="justify-content:center;border:1px dashed rgba(255,255,255,.35);margin-top:10px">+ إضافة قسم</button></div>
  <div class="mn" style="margin-top:14px">${GH?`<button class="nav" data-tok="1" style="justify-content:center;border:1px solid rgba(255,255,255,.25)">${TOKEN?'تسجيل الخروج':'تسجيل الدخول للتحرير'}</button>`:''}<div class="st ${off?'off':''}" style="margin-top:14px"><i></i><span id="stt">${status}</span></div></div></aside>`;
 }
 function rowsDash(){
@@ -160,24 +171,25 @@ function dept(id){
  <td data-l="تاريخ القدوم"><input class="cell" data-f="arrive" type="date" value="${esc(r.arrive)}" title="اختر تاريخ القدوم"></td>
  <td data-l="تاريخ العودة"><input class="cell" data-f="back" type="date" min="${esc(r.arrive)}" value="${esc(r.back)}" title="اختر تاريخ العودة"></td>
  <td data-l="الرابط"><input class="cell" data-f="link" dir="ltr" value="${esc(r.link)}" placeholder="https://…"></td>
- <td><button class="x" data-del="${r.id}">حذف</button></td></tr>`).join('');
+ <td class="act"><button class="sv${dirty.has(r.id)?' dirty':''}" data-save="${r.id}">حفظ</button><button class="x" data-del="${r.id}">حذف</button></td></tr>`).join('');
  return `<div class="dh"><input class="cell dn" data-dn="${id}" value="${esc(d.name)}" style="color:${d.c}" title="اضغط لتعديل اسم القسم"><span class="badge" style="--c:${d.c}">${cnt(id)} زائر</span>
  <button class="x" data-deld="${id}" style="margin-inline-start:auto">حذف القسم</button></div>
- <p class="hint">اضغط على الدائرة لإضافة الصورة، واضغط على اسم القسم لتعديله. يُحفظ كل ما تكتبه تلقائيًا ويظهر مباشرة في لوحة المتابعة.</p>
- <div class="tw"><table><thead><tr><th>م</th><th>الصورة</th><th style="min-width:170px">الاسم</th><th style="min-width:140px">الوظيفة</th><th style="min-width:150px">رقم الهاتف</th><th style="min-width:170px">العنوان</th><th style="min-width:180px">غرض الزيارة</th><th style="min-width:150px">تاريخ القدوم</th><th style="min-width:150px">تاريخ العودة</th><th style="min-width:130px">الرابط</th><th></th></tr></thead>
+ <p class="hint">اضغط على الدائرة لإضافة الصورة، واضغط على اسم القسم لتعديله. بعد تعبئة بيانات الزائر اضغط زر «حفظ» ليُحفظ ويظهر في لوحة المتابعة.</p>
+ <div class="tw"><table><thead><tr><th>م</th><th>الصورة</th><th style="min-width:170px">الاسم</th><th style="min-width:140px">الوظيفة</th><th style="min-width:150px">رقم الهاتف</th><th style="min-width:170px">العنوان</th><th style="min-width:180px">غرض الزيارة</th><th style="min-width:150px">تاريخ القدوم</th><th style="min-width:150px">تاريخ العودة</th><th style="min-width:130px">الرابط</th><th class="act"></th></tr></thead>
  <tbody>${body||`<tr><td colspan="11" class="empty">ابدأ بإضافة أول زائر</td></tr>`}</tbody></table></div>
  <button class="add" data-add="${id}">+ إضافة زائر جديد</button>`;
 }
 function render(){
  $('#app').innerHTML=side()+`<main>${view===ALL?dash():dept(view)}</main>`;
- if(!canEdit()){document.querySelectorAll('[data-f],[data-dn]').forEach(e=>e.readOnly=true);document.querySelectorAll('[data-ph]').forEach(e=>e.disabled=true);document.querySelectorAll('.add,.x,[data-newdept]').forEach(e=>e.remove());const t=$('.hint');if(t)t.textContent='وضع القراءة فقط. للتعديل اضغط «تسجيل الدخول للتحرير» وأدخل رمز التحرير (PIN).'}
+ if(!canEdit()){document.querySelectorAll('[data-f],[data-dn]').forEach(e=>e.readOnly=true);document.querySelectorAll('[data-ph]').forEach(e=>e.disabled=true);document.querySelectorAll('.add,.x,.sv,[data-newdept]').forEach(e=>e.remove());const t=$('.hint');if(t)t.textContent='وضع القراءة فقط. للتعديل اضغط «تسجيل الدخول للتحرير» وأدخل رمز التحرير (PIN).'}
 }
 const busy=()=>document.activeElement&&document.activeElement.matches&&document.activeElement.matches('[data-f],[data-dn]');
 const WHY={pin:'رمز التحرير (PIN) غير صحيح',pin_default:'لم يتم تغيير PIN في Apps Script بعد',net:'تعذّر الاتصال بالخادم',bad:'طلب غير صالح'};
 function setSt(t,bad){status=t;off=!!bad;const s=$('#stt');if(s){s.textContent=t;s.parentNode.classList.toggle('off',!!bad)}}
 function persist(p){setSt('جارٍ الحفظ…');p.then(()=>setSt(GH?'تم الحفظ ✓':'تم الحفظ في المتصفح'),e=>{const c=e&&e.message;setSt('تعذّر الحفظ ('+c+'): '+(WHY[c]||'خطأ غير معروف'),1);console.error(e)})}
-const save=r=>persist(store.op({op:'set',row:r}));
-const T={};
+const save=r=>{dirty.delete(r.id);persist(store.op({op:'set',row:r}))};
+const T={},dirty=new Set();
+window.addEventListener('beforeunload',e=>{if(dirty.size){e.preventDefault();e.returnValue=''}});
 const fi=document.createElement('input');fi.type='file';fi.accept='image/*';let phId=null;
 fi.onchange=()=>{
  const f=fi.files[0],id=phId;fi.value='';if(!f||!id)return;
@@ -202,7 +214,7 @@ document.addEventListener('input',e=>{
  const id=t.closest('tr').dataset.id,r=rows.find(x=>x.id===id);if(!r)return;
  r[f]=t.value;
  if(f==='arrive'){const b=t.closest('tr').querySelector('[data-f=back]');if(b)b.min=t.value}
- clearTimeout(T[id]);T[id]=setTimeout(()=>save(r),DEB);
+ dirty.add(id);const sb=t.closest('tr').querySelector('.sv');if(sb){sb.classList.remove('ok');sb.classList.add('dirty');sb.textContent='حفظ'}
 });
 document.addEventListener('change',e=>{if(e.target.id==='fsel'){flt=e.target.value;render()}});
 document.addEventListener('click',e=>{
@@ -212,6 +224,14 @@ document.addEventListener('click',e=>{
  if(d.menu!==undefined){menuOpen=!menuOpen;render();return}
  if(d.view!==undefined){view=d.view;menuOpen=false;if(view===ALL)flt=ALL;render();scrollTo(0,0)}
  else if(d.flt!==undefined){flt=d.flt;render()}
+ else if(d.save){
+  const r=rows.find(x=>x.id===d.save);if(!r)return;
+  if(!(r.name||'').trim()){alert('يرجى كتابة اسم الزائر أولًا');return}
+  b.disabled=true;b.textContent='جارٍ الحفظ…';
+  const p=store.op({op:'set',row:r});persist(p);
+  p.then(()=>{dirty.delete(r.id);render();const nb=document.querySelector('.sv[data-save="'+r.id+'"]');if(nb){nb.classList.add('ok');nb.textContent='تم الحفظ ✓';setTimeout(()=>{nb.classList.remove('ok');nb.textContent='حفظ'},2200)}},
+   ()=>{b.disabled=false;b.textContent='حفظ'});
+ }
  else if(d.ph){phId=d.ph;fi.click()}
  else if(d.newdept!==undefined){
   const name=(prompt('اسم القسم الجديد')||'').trim();if(!name)return;
@@ -277,7 +297,7 @@ async function refresh(){
  catch(e){off=true;status='تعذّر التحميل من Google Sheet'}
  render();
 }
-async function init(){render();await refresh();if(GH)setInterval(()=>{if(!busy()&&!document.hidden)refresh()},30000)}
+async function init(){render();await refresh();if(GH)setInterval(()=>{if(!busy()&&!dirty.size&&!document.hidden)refresh()},30000)}
 init();
 </script>
 </body>
