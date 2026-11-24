@@ -112,6 +112,16 @@ tbody tr:hover .act{background:var(--hov)}
  .dn{min-width:0;flex:1;font-size:26px}
  .dh .x{margin-inline-start:0!important}
 }
+@media (min-width:821px){
+ html,body{height:100%;overflow:hidden}
+ #app{height:100vh;min-height:0}
+ main{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:auto;padding:40px 48px 32px}
+ main>*{flex:none}
+ main>.tw{flex:1 1 auto;min-height:260px;overflow:auto}
+ .tw table{border-collapse:separate;border-spacing:0}
+ thead th{position:sticky;top:0;z-index:3}
+ th.act{z-index:4}
+}
 </style>
 </head>
 <body>
@@ -137,7 +147,7 @@ const avEdit=r=>`<button class="av" data-ph="${r.id}" title="إضافة أو ت�
 function side(){
  const nav=(v,t,n)=>`<button class="nav ${view===v?'on':''}" data-view="${esc(v)}"><span>${esc(t)}</span><small>${n}</small></button>`;
  return `<aside class="${menuOpen?'open':''}"><img class="logo" src="logo.png" alt="المجلس الإشرافي"><span class="cur">${esc(view===ALL?'لوحة المتابعة':dn(view))}</span><button class="burger" data-menu="1" aria-label="القائمة">${menuOpen?'✕':'☰'}</button><div class="sep"></div>
- <div class="mn" style="flex:1;min-height:0;overflow-y:auto">${nav(ALL,'الصفحة الرئيسية',tot())}<div class="lbl">إدخال الزائرين حسب الجهة</div>${depts.map(d=>nav(d.id,d.name,cnt(d.id))).join('')}<button class="nav" data-newdept style="justify-content:center;border:1px dashed rgba(255,255,255,.35);margin-top:10px">+ إضافة قسم</button></div>
+ <div class="mn" style="flex:1;min-height:0;overflow-y:auto">${nav(ALL,'لوحة المتابعة',tot())}<div class="lbl">إدخال الزائرين حسب الجهة</div>${depts.map(d=>nav(d.id,d.name,cnt(d.id))).join('')}<button class="nav" data-newdept style="justify-content:center;border:1px dashed rgba(255,255,255,.35);margin-top:10px">+ إضافة قسم</button></div>
  <div class="mn" style="margin-top:14px">${GH?`<button class="nav" data-tok="1" style="justify-content:center;border:1px solid rgba(255,255,255,.25)">${TOKEN?'تسجيل الخروج':'تسجيل الدخول للتحرير'}</button>`:''}<div class="st ${off?'off':''}" style="margin-top:14px"><i></i><span id="stt">${status}</span></div></div></aside>`;
 }
 function rowsDash(){
@@ -179,14 +189,19 @@ function dept(id){
  <tbody>${body||`<tr><td colspan="11" class="empty">ابدأ بإضافة أول زائر</td></tr>`}</tbody></table></div>
  <button class="add" data-add="${id}">+ إضافة زائر جديد</button>`;
 }
+let lastKey='';
 function render(){
+ const old=$('.tw'),key=view+'|'+flt,keep=old&&key===lastKey?[old.scrollTop,old.scrollLeft]:null;
  $('#app').innerHTML=side()+`<main>${view===ALL?dash():dept(view)}</main>`;
+ lastKey=key;
+ if(keep){const nw=$('.tw');if(nw){nw.scrollTop=keep[0];nw.scrollLeft=keep[1]}}
  if(!canEdit()){document.querySelectorAll('[data-f],[data-dn]').forEach(e=>e.readOnly=true);document.querySelectorAll('[data-ph]').forEach(e=>e.disabled=true);document.querySelectorAll('.add,.x,.sv,[data-newdept]').forEach(e=>e.remove());const t=$('.hint');if(t)t.textContent='وضع القراءة فقط. للتعديل اضغط «تسجيل الدخول للتحرير» وأدخل رمز التحرير (PIN).'}
 }
 const busy=()=>document.activeElement&&document.activeElement.matches&&document.activeElement.matches('[data-f],[data-dn]');
 const WHY={pin:'رمز التحرير (PIN) غير صحيح',pin_default:'لم يتم تغيير PIN في Apps Script بعد',net:'تعذّر الاتصال بالخادم',bad:'طلب غير صالح'};
 function setSt(t,bad){status=t;off=!!bad;const s=$('#stt');if(s){s.textContent=t;s.parentNode.classList.toggle('off',!!bad)}}
-function persist(p){setSt('جارٍ الحفظ…');p.then(()=>setSt(GH?'تم الحفظ ✓':'تم الحفظ في المتصفح'),e=>{const c=e&&e.message;setSt('تعذّر الحفظ ('+c+'): '+(WHY[c]||'خطأ غير معروف'),1);console.error(e)})}
+let pend=0;
+function persist(p){pend++;setSt('جارٍ الحفظ…');p.then(()=>{pend--;setSt(GH?'تم الحفظ ✓':'تم الحفظ في المتصفح')},e=>{pend--;const c=e&&e.message;setSt('تعذّر الحفظ ('+c+'): '+(WHY[c]||'خطأ غير معروف'),1);console.error(e)})}
 const save=r=>{dirty.delete(r.id);persist(store.op({op:'set',row:r}))};
 const T={},dirty=new Set();
 window.addEventListener('beforeunload',e=>{if(dirty.size){e.preventDefault();e.returnValue=''}});
@@ -293,6 +308,7 @@ async function tokenToggle(){
  render();
 }
 async function refresh(){
+ if(pend)return;
  try{const d=await store.load();depts=d.depts;rows=d.rows.sort((a,b)=>(a.ts||0)-(b.ts||0));off=false;status=GH?'متصل بـ Google Sheet':'تخزين محلي في هذا المتصفح فقط'}
  catch(e){off=true;status='تعذّر التحميل من Google Sheet'}
  render();
